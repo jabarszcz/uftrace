@@ -147,6 +147,9 @@ static void setup_child_environ(struct opts *opts, int pfd)
 	if (opts->patch)
 		setenv("UFTRACE_PATCH", opts->patch, 1);
 
+	if (opts->dynamic)
+		setenv("UFTRACE_DYNAMIC_SERVER_PORT", opts->dynamic, 1);
+
 	if (opts->depth != OPT_DEPTH_DEFAULT) {
 		snprintf(buf, sizeof(buf), "%d", opts->depth);
 		setenv("UFTRACE_DEPTH", buf, 1);

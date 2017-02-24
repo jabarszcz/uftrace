@@ -83,6 +83,7 @@ enum options {
 	OPT_kernel_skip_out,
 	OPT_kernel_full,
 	OPT_kernel_only,
+	OPT_dynamic_port,
 };
 
 static struct argp_option ftrace_options[] = {
@@ -140,6 +141,8 @@ static struct argp_option ftrace_options[] = {
 	{ "flame-graph", OPT_flame_graph, 0, 0, "Dump recorded data in FlameGraph format" },
 	{ "sample-time", OPT_sample_time, "TIME", 0, "Show flame graph with this sampliing time" },
 	{ "patch", 'P', "FUNC", 0, "Apply dynamic patching for FUNCs" },
+	{ "dynamic-port", OPT_dynamic_port, "PORT", 0, "Start server controlling dynamic patching on port PORT" },
+	{ "dynamic-server", 'S', 0, 0, "Start server controlling dynamic patching" },
 	{ 0 }
 };
 
@@ -388,6 +391,15 @@ static error_t parse_option(int key, char *arg, struct argp_state *state)
 
 	case 'P':
 		opts->patch = opt_add_string(opts->patch, arg);
+		break;
+	case 'S':
+		if (!opts->dynamic)
+			opts->dynamic = opt_add_string(opts->dynamic, UFTRACE_DYNAMIC_PORT);
+		break;
+
+	case OPT_dynamic_port:
+		if (!opts->dynamic)
+			opts->dynamic = opt_add_string(opts->dynamic, arg);
 		break;
 
 	case OPT_flat:

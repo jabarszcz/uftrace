@@ -20,6 +20,7 @@
 #define UFTRACE_DIR_OLD_NAME  "ftrace.dir"
 
 #define UFTRACE_RECV_PORT  8090
+#define UFTRACE_DYNAMIC_PORT "8091"
 
 #define OPT_RSTACK_MAX      65535
 #define OPT_RSTACK_DEFAULT  1024
@@ -143,6 +144,7 @@ struct opts {
 	char *retval;
 	char *diff;
 	char *patch;
+	char *dynamic;
 	int mode;
 	int idx;
 	int depth;

@@ -27,6 +27,7 @@
 
 #include "libmcount/mcount.h"
 #include "libmcount/dynamic.h"
+#include "libmcount/dynamic-server.h"
 #include "mcount-arch.h"
 #include "utils/utils.h"
 #include "utils/symbol.h"
@@ -699,6 +700,7 @@ void __visible_default __monstartup(unsigned long low, unsigned long high)
 	char *color_str;
 	char *demangle_str;
 	char *patch_str;
+	char *dynamic_server_port_str;
 	char *dirname;
 	struct stat statbuf;
 	LIST_HEAD(modules);
@@ -720,6 +722,7 @@ void __visible_default __monstartup(unsigned long low, unsigned long high)
 	threshold_str = getenv("UFTRACE_THRESHOLD");
 	demangle_str = getenv("UFTRACE_DEMANGLE");
 	patch_str = getenv("UFTRACE_PATCH");
+	dynamic_server_port_str = getenv("UFTRACE_DYNAMIC_SERVER_PORT");
 
 	if (logfd_str) {
 		int fd = strtol(logfd_str, NULL, 0);
@@ -800,6 +803,10 @@ void __visible_default __monstartup(unsigned long low, unsigned long high)
 
 	if (patch_str)
 		mcount_arch_dynamic_update(&symtabs, patch_str);
+
+	if (dynamic_server_port_str)
+		start_dyn_server(dynamic_server_port_str, &symtabs);
+
 
 	if (getenv("UFTRACE_PLTHOOK")) {
 		if (symtabs.loaded && symtabs.dsymtab.nr_sym == 0) {
