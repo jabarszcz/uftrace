@@ -105,6 +105,9 @@ UFTRACE_HDRS := $(wildcard $(srcdir)/*.h $(srcdir)/utils/*.h)
 UFTRACE_HDRS += $(srcdir)/libmcount/mcount.h
 
 LIBMCOUNT_DYNAMIC_SRCS := $(srcdir)/libmcount/dynamic.c
+LIBMCOUNT_DYNAMIC_SRCS += $(srcdir)/libmcount/mongoose.c
+LIBMCOUNT_DYNAMIC_SRCS += $(srcdir)/libmcount/frozen.c
+LIBMCOUNT_DYNAMIC_SRCS += $(srcdir)/libmcount/dynamic-server.c
 
 LIBMCOUNT_SRCS := $(filter-out %-nop.c,$(wildcard $(srcdir)/libmcount/*.c))
 LIBMCOUNT_SRCS += $(srcdir)/utils/symbol.c $(srcdir)/utils/debug.c
