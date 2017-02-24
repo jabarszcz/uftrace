@@ -26,6 +26,7 @@
 #define PR_DOMAIN  DBG_MCOUNT
 
 #include "libmcount/mcount.h"
+#include "libmcount/dynamic.h"
 #include "mcount-arch.h"
 #include "utils/utils.h"
 #include "utils/symbol.h"
@@ -682,11 +683,6 @@ static void build_debug_domain(char *dbg_domain_str)
 		d = pos - DBG_DOMAIN_STR;
 		dbg_domain[d] = level;
 	}
-}
-
-__weak int mcount_arch_dynamic_update(struct symtabs *symtabs, char *patch_funcs)
-{
-	return 0;
 }
 
 /*

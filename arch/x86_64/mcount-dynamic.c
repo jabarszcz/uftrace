@@ -13,6 +13,8 @@
 #define PAGE_SIZE  4096
 #define PAGE_MASK  (PAGE_SIZE - 1)
 
+#include "libmcount/dynamic.h"
+
 /* target profile function it needs to call */
 extern void __fentry__(void);
 
@@ -88,7 +90,7 @@ static void setup_fentry_trampoline(struct arch_dynamic_info *adi)
 
 static void cleanup_fentry_trampoline(struct arch_dynamic_info *adi)
 {
-	if (mprotect((void *)adi->addr, adi->size, PROT_EXEC))
+	if (mprotect((void *)adi->addr, adi->size, PROT_EXEC | PROT_WRITE | PROT_READ))
 		pr_err("cannot restore trampoline due to protection");
 }
 
@@ -118,7 +120,7 @@ static void prepare_dynamic_update(void)
 	}
 }
 
-static int update_sym_dynamic(struct sym *sym)
+int enable_sym_dynamic(struct sym *sym)
 {
 	unsigned char nop[] = { 0x67, 0x0f, 0x1f, 0x04, 0x00 };
 	unsigned char *insn = (void *)sym->addr;
@@ -141,6 +143,72 @@ static int update_sym_dynamic(struct sym *sym)
 		sym->name);
 
 	return 0;
+}
+
+int disable_sym_dynamic(struct sym *sym)
+{
+	unsigned char nop[] = { 0x67, 0x0f, 0x1f, 0x04, 0x00 };
+	unsigned char call[5] = { 0xe8, 0x00, 0x00, 0x00, 0x00 };
+	unsigned char *insn = (void *)sym->addr;
+	unsigned int target_addr;
+
+	target_addr = get_target_addr(sym->addr);
+	if (target_addr == 0)
+		return 0;
+
+	memcpy(&call[1], &target_addr, sizeof(target_addr));
+
+	/* only support calls to __fentry__ at the beginning */
+	if (memcmp(insn, call, sizeof(call)))
+		return 0;
+
+	/* hopefully we're not patching 'memcpy' itself */
+	memcpy(insn, nop, sizeof(nop));
+
+	pr_dbg3("dynamically replaced call to __fentry__ by nop in function '%s'\n",
+		sym->name);
+
+	return 0;
+}
+
+struct list_head *get_instrumented_funcs(struct symtab *symtab, struct list_head * ifs)
+{
+	unsigned char nop[] = { 0x67, 0x0f, 0x1f, 0x04, 0x00 };
+	unsigned char call[5] = { 0xe8, 0x00, 0x00, 0x00, 0x00 };
+	struct sym *sym;
+	unsigned char *insn;
+	unsigned int target_addr;
+
+	struct instrumented_func *new = NULL;
+
+	int active;
+	unsigned i;
+
+	for (i = 0; i < symtab->nr_sym; i++) {
+		sym = &symtab->sym[i];
+		insn = (void *)sym->addr;
+
+		target_addr = get_target_addr(sym->addr);
+		if (target_addr == 0)
+			continue;
+
+		memcpy(&call[1], &target_addr, sizeof(target_addr));
+
+		/* only support calls to __fentry__ at the beginning */
+		if (!memcmp(insn, call, sizeof(call)))
+			active = 1;
+		else if (!memcmp(insn, nop, sizeof(nop)))
+			active = 0;
+		else continue;
+
+		new = malloc(sizeof(*new));
+		INIT_LIST_HEAD(&new->list);
+		new->active = active;
+		new->sym = sym;
+
+		list_add_tail(&new->list, ifs);
+	}
+	return ifs;
 }
 
 static int do_dynamic_update(struct symtabs *symtabs, char *patch_funcs)
@@ -178,7 +246,7 @@ static int do_dynamic_update(struct symtabs *symtabs, char *patch_funcs)
 			    (!is_regex && strcmp(name, sym->name)))
 				continue;
 
-			if (update_sym_dynamic(sym) < 0)
+			if (enable_sym_dynamic(sym) < 0)
 				return -1;
 		}
 
@@ -198,8 +266,6 @@ static void finish_dynamic_update(void)
 		tmp = adi->next;
 
 		cleanup_fentry_trampoline(adi);
-		free(adi->mod_name);
-		free(adi);
 
 		adi = tmp;
 	}
