@@ -1,4 +1,3 @@
-
 from functools import partial
 
 import urwid as uw
@@ -67,7 +66,7 @@ class SelectableFunctionText(uw.Text):
         return True
 
     def keypress(self, _, key):
-        if key == 'enter':
+        if key == 'enter' or key == ' ':
             self.on_select(self.name)
             return None
         return key
@@ -252,18 +251,18 @@ class Ui:
     """
     PALETTE = [
         ('function', 'white', 'black'),
-        ('function.focus', 'black', 'white'),
+        ('function.focus', 'light green', 'black'),
         ('function.selected', 'white', 'dark blue'),
-        ('function.selected.focus', 'white', 'light blue'),
+        ('function.selected.focus', 'light green', 'light blue'),
         ('function.active', 'white,bold', 'black'),
-        ('function.active.focus', 'black,bold', 'white'),
+        ('function.active.focus', 'light green,bold', 'black'),
         ('function.active.selected', 'white,bold', 'dark blue'),
-        ('function.active.selected.focus', 'white,bold', 'light blue'),
+        ('function.active.selected.focus', 'light green,bold', 'light blue'),
         ('edit.normal', 'white', 'black'),
         ('edit.error', 'white', 'dark red')
     ]
 
-    HELP_TEXT = "'f'\n" \
+    HELP_TEXT = "'f' or '/'\n" \
                 "  to search, format is\n" \
                 "    [op1]:[op2]:[regex]\n" \
                 "    The options are\n" \
@@ -323,7 +322,7 @@ class Ui:
     def __handle_keyboard(self, key):
         if key == 'q':
             raise uw.ExitMainLoop()
-        elif key == 'f':
+        elif key == 'f' or key == '/':
             self.ui_func_list.disable()
             self.ui_filter_edit.base_widget.enable()
             self.top.set_focus(1)
